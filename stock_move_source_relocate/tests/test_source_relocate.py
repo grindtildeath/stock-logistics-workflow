@@ -54,7 +54,7 @@ class TestSourceRelocate(SourceRelocateCommon):
         move = self._create_single_move(self.product, self.wh.pick_type_id)
         move._assign_picking()
         move._action_assign()
-
+        # Move is split after partial assignation
         self.assertRecordValues(
             move,
             [
@@ -78,6 +78,13 @@ class TestSourceRelocate(SourceRelocateCommon):
                 }
             ],
         )
+        # Remove stock must remove the reservation and merge back the moves together
+        inventory_quant = (
+            self.env["stock.quant"].sudo()._gather(self.product, self.loc_shelf_1)
+        )
+        inventory_quant.inventory_quantity = 0
+        inventory_quant.action_apply_inventory()
+        self.assertEqual(len((move | new_move).exists()), 1)
 
     def test_relocate_ignore_available(self):
         self._create_relocate_rule(

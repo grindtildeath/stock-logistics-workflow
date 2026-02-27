@@ -70,6 +70,7 @@ class StockMove(models.Model):
             # move on the specific relocation (for replenishment), so
             # update it's source location
             self.location_id = relocation.relocate_location_id
+            self._action_confirm(merge=True)
             return self
 
         missing_reserved_uom_quantity = self.product_uom_qty - qty_reserved
