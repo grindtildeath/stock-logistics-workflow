@@ -86,6 +86,25 @@ class TestSourceRelocate(SourceRelocateCommon):
         inventory_quant.action_apply_inventory()
         self.assertEqual(len((move | new_move).exists()), 1)
 
+    def test_relocate_partial_merge_new_move(self):
+        self._create_relocate_rule(
+            self.wh.lot_stock_id, self.loc_replenish, self.wh.pick_type_id
+        )
+        self._update_qty_in_location(self.loc_shelf_1, self.product, 3)
+        move = self._create_single_move(self.product, self.wh.pick_type_id)
+        move._assign_picking()
+        move._action_assign()
+        new_move = move.picking_id.move_ids - move
+        extra_move = self._create_single_move(
+            self.product,
+            self.wh.pick_type_id,
+            custom_vals={
+                "location_id": self.loc_replenish.id,
+                "picking_id": new_move.picking_id.id,
+            },
+        )
+        self.assertEqual(len((new_move | extra_move).exists()), 1)
+
     def test_relocate_ignore_available(self):
         self._create_relocate_rule(
             self.wh.lot_stock_id, self.loc_replenish, self.wh.pick_type_id
