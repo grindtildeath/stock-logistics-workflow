@@ -48,11 +48,11 @@ class SourceRelocateCommon(common.TransactionCase):
             "location_id": picking_type.default_location_src_id.id,
             "location_dest_id": picking_type.default_location_dest_id.id,
             "procure_method": "make_to_stock",
+            "state": "confirmed",
         }
         if custom_vals:
             move_vals.update(custom_vals)
         move = self.env["stock.move"].create(move_vals)
-        move._action_confirm()
         return move
 
     def _create_relocate_rule(self, location, relocation, picking_type, domain=None):

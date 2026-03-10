@@ -90,20 +90,29 @@ class TestSourceRelocate(SourceRelocateCommon):
         self._create_relocate_rule(
             self.wh.lot_stock_id, self.loc_replenish, self.wh.pick_type_id
         )
-        self._update_qty_in_location(self.loc_shelf_1, self.product, 3)
-        move = self._create_single_move(self.product, self.wh.pick_type_id)
-        move._assign_picking()
-        move._action_assign()
-        new_move = move.picking_id.move_ids - move
-        extra_move = self._create_single_move(
+        self._update_qty_in_location(self.loc_shelf_1, self.product, 5)
+        group = self.env["procurement.group"].create({"name": "Test merge"})
+        first_move = self._create_single_move(
+            self.product, self.wh.pick_type_id, custom_vals={"group_id": group.id}
+        )
+        first_move._assign_picking()
+        picking = first_move.picking_id
+        second_move = self._create_single_move(
             self.product,
             self.wh.pick_type_id,
             custom_vals={
                 "location_id": self.loc_replenish.id,
-                "picking_id": new_move.picking_id.id,
+                "group_id": group.id,
+                "picking_id": picking.id,
             },
         )
-        self.assertEqual(len((new_move | extra_move).exists()), 1)
+        self.assertEqual(first_move.product_uom_qty, 10)
+        self.assertEqual(second_move.product_uom_qty, 10)
+        picking.action_assign()
+        self.assertEqual(first_move.state, "assigned")
+        self.assertEqual(first_move.product_uom_qty, 5)
+        self.assertEqual(second_move.state, "confirmed")
+        self.assertEqual(second_move.product_uom_qty, 15)
 
     def test_relocate_ignore_available(self):
         self._create_relocate_rule(

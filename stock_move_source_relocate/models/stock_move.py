@@ -86,8 +86,8 @@ class StockMove(models.Model):
         # location, so keep this part in the move and split the rest
         # in a new move, where will take the goods in the relocation
         new_move = self.create(self._split(need))
-        new_move._action_confirm(merge=False)
         new_move.location_id = relocation.relocate_location_id
+        new_move._action_confirm()
         self._action_assign()
         return new_move
 
